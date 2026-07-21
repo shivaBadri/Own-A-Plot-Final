@@ -1,0 +1,251 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------------------
+   Design tokens — lifted verbatim from the approved Own A Plot frontend.
+   The admin UI uses this same file. There is no second stylesheet, no second
+   palette, and no admin-only font.
+--------------------------------------------------------------------------- */
+
+:root {
+  --cream: #f7f4ec;
+  --sand: #d8c8a8;
+  --charcoal: #111111;
+  --muted: #77736b;
+  --olive: #5f6f45;
+  --earth: #8a6542;
+  --loam: #4d3d25;
+  --gold: #b98c1e;
+  --danger: #8c3a2b;
+}
+
+html,
+body {
+  background-color: var(--cream);
+  color: var(--charcoal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+::selection {
+  background: var(--sand);
+  color: var(--charcoal);
+}
+
+@layer components {
+  /* ui.md rule 2: width min(90%, 1440px), centered. */
+  .container-page {
+    width: min(90%, 1440px);
+    margin-inline: auto;
+  }
+
+  /* ui.md rule 4: fluid section rhythm, 48 -> 120px. */
+  .section-y {
+    padding-top: clamp(3rem, 8vw, 7.5rem);
+    padding-bottom: clamp(3rem, 8vw, 7.5rem);
+  }
+
+  /* ui.md rule 3: paragraph copy never exceeds 720px / 65ch. */
+  .prose-max {
+    max-width: min(65ch, 720px);
+  }
+
+  /* -------------------------------------------------------------------------
+     STAGE 4 — PREMIUM LAYER (opt-in)
+
+     Additive utilities for the "warm beige / brown & gold" direction. They are
+     deliberately opt-in classes rather than global overrides: the approved
+     design is a flat, hairline-bordered editorial system, and these are applied
+     only where a little warmth or elevation helps (floating panels, feature
+     surfaces), so nothing existing is restyled underneath.
+  ------------------------------------------------------------------------- */
+
+  /* Warm beige gradient wash — a soft, premium alternative to flat cream. */
+  .surface-warm {
+    background-image: linear-gradient(
+      160deg,
+      #faf7ef 0%,
+      #f3ecdd 55%,
+      #ece2cd 100%
+    );
+  }
+
+  /* Floating card: soft warm shadow + hairline, corners still square. */
+  .card-float {
+    @apply border border-charcoal/10 bg-cream shadow-soft;
+  }
+
+  /* Glassmorphism for overlays that sit on top of imagery. */
+  .glass-panel {
+    background-color: rgba(247, 244, 236, 0.82);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    @apply border border-cream/40;
+  }
+
+  /* Thin gold underline accent for eyebrows/headings that want emphasis. */
+  .accent-gold {
+    @apply relative;
+  }
+  .accent-gold::after {
+    content: "";
+    @apply absolute -bottom-2 left-0 block h-px w-10 bg-gold;
+  }
+
+  .btn-luxury {
+    @apply inline-flex items-center justify-center gap-3 border border-charcoal px-8 py-4 text-sm uppercase tracking-[0.22em] text-charcoal transition-all duration-500 hover:bg-charcoal hover:text-cream focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-charcoal disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-charcoal;
+  }
+
+  .btn-luxury-inverse {
+    @apply inline-flex items-center justify-center gap-3 border border-cream px-8 py-4 text-sm uppercase tracking-[0.22em] text-cream transition-all duration-500 hover:bg-cream hover:text-charcoal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cream disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  /* Filled primary - used on bright hero images where an outline button would wash out. */
+  .btn-hero-primary {
+    @apply inline-flex items-center gap-3 bg-cream px-8 py-4 text-sm uppercase tracking-[0.22em] text-charcoal shadow-[0_10px_30px_rgba(0,0,0,0.18)] transition-all duration-500 hover:bg-charcoal hover:text-cream focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cream;
+  }
+
+  /* Secondary hero - outline over a subtle wash so it stays legible on any hero. */
+  .btn-hero-secondary {
+    @apply inline-flex items-center gap-3 border border-cream bg-black/20 px-8 py-4 text-sm uppercase tracking-[0.22em] text-cream backdrop-blur-sm transition-all duration-500 hover:bg-cream hover:text-charcoal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-cream;
+  }
+
+  .eyebrow {
+    @apply text-[11px] uppercase tracking-[0.32em] text-muted;
+  }
+
+  .rule {
+    @apply block h-px w-12 bg-charcoal/30;
+  }
+
+  .link-underline {
+    @apply relative inline-block after:absolute after:left-0 after:-bottom-1 after:h-px after:w-full after:origin-right after:scale-x-0 after:bg-current after:transition-transform after:duration-500 hover:after:origin-left hover:after:scale-x-100 focus-visible:outline-none focus-visible:after:origin-left focus-visible:after:scale-x-100;
+  }
+
+  .input-luxury {
+    @apply w-full border-0 border-b border-charcoal/30 bg-transparent py-4 text-body text-charcoal placeholder:text-muted focus:border-charcoal focus:outline-none focus:ring-0 focus-visible:border-charcoal;
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 900ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* -------------------------------------------------------------------------
+     ADMIN LAYER
+     Same palette, same fonts, same geometry (square corners, hairline borders,
+     500ms transitions) - one density step tighter, because an admin table is
+     not a hero section.
+  ------------------------------------------------------------------------- */
+
+  .btn-admin {
+    @apply inline-flex items-center justify-center gap-2.5 border border-charcoal px-6 py-3 text-xs uppercase tracking-[0.22em] text-charcoal transition-all duration-500 hover:bg-charcoal hover:text-cream focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-charcoal disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-charcoal;
+  }
+
+  .btn-admin-solid {
+    @apply inline-flex items-center justify-center gap-2.5 border border-charcoal bg-charcoal px-6 py-3 text-xs uppercase tracking-[0.22em] text-cream transition-all duration-500 hover:bg-transparent hover:text-charcoal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-charcoal disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-charcoal disabled:hover:text-cream;
+  }
+
+  .btn-admin-ghost {
+    @apply inline-flex items-center justify-center gap-2.5 border border-transparent px-4 py-2.5 text-xs uppercase tracking-[0.22em] text-muted transition-all duration-500 hover:border-charcoal/20 hover:text-charcoal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-charcoal;
+  }
+
+  .btn-admin-danger {
+    @apply inline-flex items-center justify-center gap-2.5 border border-danger/40 px-6 py-3 text-xs uppercase tracking-[0.22em] text-danger transition-all duration-500 hover:bg-danger hover:text-cream focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-danger disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .field-admin {
+    @apply w-full border-0 border-b border-charcoal/25 bg-transparent py-2.5 text-admin-body text-charcoal placeholder:text-muted/70 focus:border-charcoal focus:outline-none focus:ring-0 disabled:opacity-50;
+  }
+
+  .field-admin-boxed {
+    @apply w-full border border-charcoal/20 bg-cream px-4 py-3 text-admin-body text-charcoal transition-colors duration-300 placeholder:text-muted/70 focus:border-charcoal focus:outline-none focus:ring-0 disabled:opacity-50;
+  }
+
+  .label-admin {
+    @apply block text-[10px] uppercase tracking-[0.28em] text-muted;
+  }
+
+  .card-admin {
+    @apply border border-charcoal/10 bg-cream p-6 md:p-8;
+  }
+
+  .table-admin {
+    @apply w-full border-collapse text-left text-admin-body;
+  }
+
+  .table-admin thead th {
+    @apply whitespace-nowrap border-b border-charcoal/20 pb-3 pr-4 text-[10px] font-normal uppercase tracking-[0.28em] text-muted;
+  }
+
+  .table-admin tbody td {
+    @apply border-b border-charcoal/10 py-4 pr-4 align-top;
+  }
+
+  .table-admin tbody tr {
+    @apply transition-colors duration-300 hover:bg-sand/20;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-2 whitespace-nowrap border px-3 py-1 text-[10px] uppercase tracking-[0.22em];
+  }
+
+  .chip-neutral {
+    @apply chip border-charcoal/20 text-muted;
+  }
+
+  .chip-live {
+    @apply chip border-olive/40 text-olive;
+  }
+
+  .chip-warn {
+    @apply chip border-earth/40 text-earth;
+  }
+
+  .chip-danger {
+    @apply chip border-danger/40 text-danger;
+  }
+
+  .skeleton {
+    @apply animate-shimmer bg-[linear-gradient(90deg,rgba(216,200,168,0.15)_25%,rgba(216,200,168,0.45)_50%,rgba(216,200,168,0.15)_75%)] bg-[length:200%_100%];
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--cream);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(17, 17, 17, 0.15);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(17, 17, 17, 0.3);
+}
+
+/* Accessibility exemption to ui.md rule 10 - the only sanctioned !important use. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

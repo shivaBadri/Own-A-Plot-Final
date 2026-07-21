@@ -1,0 +1,469 @@
+// Own A Plot — production schema.
+//
+// This file EXTENDS the original schema. No existing model, field, or enum was
+// removed or renamed; every new column is optional or has a default, so the
+// migration is non-destructive on an existing database.
+//
+// The extension exists because the approved frontend renders a much richer
+// content model than the original `Project` carried (tagline, region, acreage,
+// story, advantages, landscape rows, nearby distances, brochure, gallery).
+// Without these columns the public pages could not be database-driven.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Auth, roles & employees ----------
+
+/// Every employee holds exactly one role. The role resolves to a permission
+/// set in `src/lib/permissions.ts`; `Admin.permissionOverrides` can then grant
+/// or revoke individual permissions on top of it without inventing a new role.
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  SALES_EXECUTIVE
+  LAYOUT_DESIGNER
+  MARKETING
+  FINANCE
+  CUSTOMER_SUPPORT
+}
+
+/// `Admin` is the employee record. The model kept its original name so that
+/// every existing relation, query, session claim and import continues to work
+/// unchanged — renaming it would have been a rewrite, not an extension.
+model Admin {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  avatarUrl    String?
+
+  role     Role    @default(ADMIN)
+  /// Deactivation is reversible and preserves the audit trail; deletion is not.
+  /// An inactive employee cannot sign in and any live session is rejected on
+  /// the next request.
+  isActive Boolean @default(true)
+
+  phone       String?
+  jobTitle    String?
+  lastLoginAt DateTime?
+  lastLoginIp String?
+
+  /// Explicit grants layered over the role, e.g. ["reports:export"].
+  permissionGrants String[] @default([])
+  /// Explicit revocations, applied after grants. Revoke always wins.
+  permissionRevokes String[] @default([])
+
+  /// Set when an administrator resets the password. The employee is forced
+  /// through /admin/profile before they can reach anything else.
+  mustChangePassword Boolean @default(false)
+
+  createdById String?
+  createdBy   Admin?  @relation("AdminCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdTeam Admin[] @relation("AdminCreatedBy")
+
+  activityLogs ActivityLog[] @relation("ActivityActor")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+/// Append-only audit trail. `actorName` and `actorEmail` are denormalised on
+/// purpose: the log must stay readable after the employee row is deleted.
+model ActivityLog {
+  id String @id @default(cuid())
+
+  actorId    String?
+  actor      Admin?  @relation("ActivityActor", fields: [actorId], references: [id], onDelete: SetNull)
+  actorName  String
+  actorEmail String
+  actorRole  Role?
+
+  /// Dotted verb, e.g. "employee.create", "venture.publish", "auth.login".
+  action  String
+  /// Model name the action touched, e.g. "Admin", "Project", "Layout".
+  entity  String
+  entityId String?
+  /// One human sentence, rendered directly in the activity table.
+  summary String
+
+  ip        String?
+  userAgent String?
+  metadata  Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([actorId, createdAt])
+  @@index([entity, entityId])
+  @@index([action])
+}
+
+// ---------- Projects (a.k.a. "Ventures" on the public site) & Plots ----------
+
+enum ProjectStatus {
+  UPCOMING
+  ONGOING
+  COMPLETED
+}
+
+/// Editorial accent colour, drawn from the approved palette.
+enum Accent {
+  OLIVE
+  EARTH
+  BARK
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  name        String
+  slug        String        @unique
+  description String
+  location    String
+  status      ProjectStatus @default(UPCOMING)
+  coverImage  String?
+  amenities   String[]      @default([])
+  isPublished Boolean       @default(false)
+
+  seoTitle       String?
+  seoDescription String?
+
+  // ---- Editorial fields required by the approved frontend ----
+
+  /// One-line editorial line shown under the venture name.
+  tagline String?
+  /// e.g. "South of the city, 45 minutes from the airport"
+  region  String?
+  /// Total extent, in acres.
+  totalAcres Float?
+
+  /// Full-bleed hero. Falls back to coverImage when null.
+  heroImage String?
+  /// Optional hero video (mp4/webm). Rendered over heroImage when present.
+  heroVideo String?
+
+  accent Accent @default(OLIVE)
+
+  /// Ordered image URLs for the editorial gallery.
+  gallery String[] @default([])
+
+  // Story block
+  storyEyebrow String?
+  storyTitle   String?
+  /// One entry per paragraph.
+  storyBody    String[] @default([])
+
+  /// Array<{ title, body, image }> — the hover-swap "Location Advantages" block.
+  advantages Json?
+  /// Array<{ label, value }> — "The Layout, in Numbers".
+  details    Json?
+  /// Array<{ title, body, image }> — full-width editorial rows.
+  landscape  Json?
+  /// Array<{ name, distance }> — "Reachable From".
+  nearby     Json?
+
+  // Location
+  address   String?
+  latitude  Float?
+  longitude Float?
+  mapEmbed  String?
+
+  // Brochure (PDF, served from Cloudinary)
+  brochureUrl      String?
+  brochureFileName String?
+  brochureFileSize String?
+
+  /// Surfaces the venture in the homepage "Featured Ventures" grid.
+  featured  Boolean @default(false)
+  /// Lower numbers sort first across public listings.
+  sortOrder Int     @default(0)
+
+  plots     Plot[]
+  media     Media[]
+  enquiries Enquiry[]
+  layouts   Layout[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([status])
+  @@index([isPublished, sortOrder])
+  @@index([featured])
+  /// The admin venture list orders by (sortOrder, updatedAt) on every page load.
+  @@index([sortOrder, updatedAt])
+  /// Backs the `orderBy: { name: "asc" }` used by every venture <select>.
+  @@index([name])
+  @@index([createdAt])
+}
+
+/// The five states an interactive master layout paints, in the order the
+/// legend reads. BOOKED and BLOCKED are additions: BOOKED is money received
+/// and paperwork pending, which is commercially different from RESERVED (soft
+/// hold), and BLOCKED covers land the venture is not selling at all — a
+/// substation easement, a temple plot, an internal road parcel.
+enum PlotStatus {
+  AVAILABLE
+  RESERVED
+  BOOKED
+  SOLD
+  BLOCKED
+}
+
+model Plot {
+  id          String     @id @default(cuid())
+  plotNumber  String
+  sizeSqft    Float
+  price       Float
+  status      PlotStatus @default(AVAILABLE)
+  facing      String?
+  description String?
+
+  /// Optional: hide price and show "On enquiry" instead.
+  priceOnRequest Boolean @default(false)
+
+  /// Frontage x depth as it is spoken on site, e.g. "30 x 40 ft". Free text
+  /// rather than two numbers because plots on a curve are not rectangles and
+  /// the sales team writes "irregular, 2,400 sq.ft" for those.
+  dimensions String?
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+
+  media     Media[]
+  enquiries Enquiry[]
+  shapes    LayoutShape[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([projectId, plotNumber])
+  @@index([status])
+  @@index([projectId, status])
+  /// The admin plots table pages through (projectId, plotNumber) ordering.
+  @@index([projectId, plotNumber])
+  /// Public plot listing sorts and filters on these two.
+  @@index([price])
+  @@index([sizeSqft])
+  @@index([createdAt])
+}
+
+// ---------- Interactive master layout ----------
+
+/// A master layout plan for a venture.
+///
+/// The uploaded image is stored and served UNCHANGED — polygons live in a
+/// separate table and are drawn over it as an SVG overlay. Nothing is ever
+/// burned into the artwork, so the sales plan can be re-exported by the
+/// architect at a new resolution and the boundaries still line up.
+model Layout {
+  id String @id @default(cuid())
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId String
+
+  /// Ventures are sold in phases; each phase gets its own plan.
+  name        String  @default("Master Layout")
+  description String?
+
+  /// The original plan artwork.
+  imageUrl String
+  /// Intrinsic pixel dimensions, captured at upload. The SVG overlay needs a
+  /// viewBox and the browser must not have to load the image to compute it.
+  imageWidth  Int
+  imageHeight Int
+
+  isPublished Boolean @default(false)
+  sortOrder   Int     @default(0)
+
+  shapes LayoutShape[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId, sortOrder])
+  @@index([projectId, isPublished])
+}
+
+/// What a polygon represents. Only PLOT shapes are clickable and sellable;
+/// the rest exist so a designer can trace context without it behaving like
+/// inventory.
+enum LayoutShapeKind {
+  PLOT
+  AMENITY
+  ROAD
+  PARK
+  ENTRANCE
+  OTHER
+}
+
+/// One polygon on a layout.
+model LayoutShape {
+  id String @id @default(cuid())
+
+  layout   Layout @relation(fields: [layoutId], references: [id], onDelete: Cascade)
+  layoutId String
+
+  /// A shape usually maps to a plot, but a clubhouse or an approach road does
+  /// not — hence nullable. onDelete: SetNull keeps the drawing intact if the
+  /// plot record is removed, rather than silently punching a hole in the plan.
+  plot   Plot?   @relation(fields: [plotId], references: [id], onDelete: SetNull)
+  plotId String?
+
+  kind LayoutShapeKind @default(PLOT)
+
+  /// Shown when the shape has no plot behind it, e.g. "Clubhouse".
+  label String?
+
+  /// Array<{ x, y }> with x and y NORMALISED to 0..1 of the image's width and
+  /// height.
+  ///
+  /// Storing pixels would tie every boundary to one export of one image: swap
+  /// the plan for a higher-resolution render and every polygon silently
+  /// drifts. Normalised points are resolution-independent and turn the render
+  /// into a single multiply.
+  points Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// A plot can be drawn at most once per layout.
+  @@unique([layoutId, plotId])
+  @@index([layoutId])
+  @@index([plotId])
+}
+
+// ---------- Enquiries ----------
+
+enum EnquiryStatus {
+  NEW
+  CONTACTED
+  CLOSED
+}
+
+model Enquiry {
+  id      String        @id @default(cuid())
+  name    String
+  email   String
+  phone   String
+  message String?
+  status  EnquiryStatus @default(NEW)
+
+  /// Free-text "Interest" line from the approved enquiry form.
+  interest String?
+  /// Which page the enquiry came from — useful for attribution.
+  source   String?
+  /// Internal notes, admin-only.
+  notes    String?
+
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  projectId String?
+
+  plot   Plot?   @relation(fields: [plotId], references: [id], onDelete: SetNull)
+  plotId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  /// The list is `where status = ? order by createdAt desc` — one composite
+  /// index serves the filter and the sort together.
+  @@index([status, createdAt])
+  @@index([projectId])
+  @@index([plotId])
+}
+
+// ---------- CMS ----------
+
+model CmsSection {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  content   Json
+  updatedAt DateTime @updatedAt
+}
+
+// ---------- Media Library ----------
+
+enum MediaKind {
+  IMAGE
+  RAW
+}
+
+model Media {
+  id       String @id @default(cuid())
+  url      String
+  publicId String
+  alt      String?
+  width    Int?
+  height   Int?
+
+  /// IMAGE for photos, RAW for brochures/PDFs. Needed to pick the right
+  /// Cloudinary resource_type when deleting.
+  kind     MediaKind @default(IMAGE)
+  /// Original filename, shown in the media library.
+  fileName String?
+  /// Size in bytes.
+  bytes    Int?
+  format   String?
+
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  projectId String?
+
+  plot   Plot?   @relation(fields: [plotId], references: [id], onDelete: SetNull)
+  plotId String?
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([projectId])
+  @@index([plotId])
+  @@index([kind, createdAt])
+}
+
+// ---------- Settings ----------
+
+model SiteSettings {
+  id           String  @id @default("singleton")
+  siteName     String  @default("Own A Plot")
+  contactEmail String?
+  contactPhone String?
+  address      String?
+  socialLinks  Json?
+
+  /// e.g. "Mon – Sat, 10am – 7pm"
+  officeHours   String?
+  /// Short paragraph used in the footer.
+  footerTagline String?
+
+  defaultSeoTitle       String?
+  defaultSeoDescription String?
+
+  // ---- Customer / partner portal (Stage 2 — "Portal Login" in Settings) ----
+  //
+  // The public navbar shows a "Login" button ONLY when the portal is enabled
+  // and a URL is set, so an operator without a portal yet never ships a dead
+  // link. The label is configurable because different ventures call it
+  // "Owner Login", "Channel Partner", "Investor Portal", etc.
+  portalEnabled Boolean @default(false)
+  portalLabel   String? @default("Login")
+  portalUrl     String?
+
+  // ---- Feature Manager (Stage 4) ----
+  //
+  // A flat map of feature-flag -> boolean. Stored as JSON so a new toggle can
+  // be added without another migration. Unknown/absent keys fall back to the
+  // safe defaults in `src/lib/features.ts`, so an old row keeps working.
+  features Json?
+
+  updatedAt DateTime @updatedAt
+}
