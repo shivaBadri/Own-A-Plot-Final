@@ -231,10 +231,14 @@ export default function LayoutCreateForm({
           <div className="mt-6 border border-charcoal/10 p-4">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={imageUrl}
-              alt="Layout preview"
-              className="max-h-80 w-full object-contain"
-            />
+            src={imageUrl}
+            alt="Layout preview"
+            className={`mx-auto object-contain ${
+            dimensions && dimensions.height > dimensions.width
+            ? "max-h-[650px] w-auto"
+             : "w-full max-h-[650px]"
+         }`}
+        />
             <p className="mt-4 text-[11px] uppercase tracking-[0.2em] text-muted">
               {dimensions
                 ? `${dimensions.width} x ${dimensions.height} px`
