@@ -98,8 +98,11 @@ export default function Navbar({
     return () => window.removeEventListener("keydown", onKey);
   }, [menuOpen]);
 
-  const filled = scrolled || menuOpen;
-  const showLogo = scrolled || menuOpen;
+  // Navbar background and logo stay visible at all times — no transparent state
+  // over the hero. `scrolled` still tracks position for potential future use.
+  void scrolled;
+  const filled = true;
+  const showLogo = true;
   const offscreen = hidden && !menuOpen;
 
   return (

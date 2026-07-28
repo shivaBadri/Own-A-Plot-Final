@@ -11,6 +11,7 @@ import {
 import { prisma } from "@/lib/db";
 import { getCms, type WhyIcon } from "@/lib/cms";
 import { toVentures, isOpen } from "@/lib/content";
+import HeroVenturesCarousel from "@/components/public/HeroVenturesCarousel";
 
 export const dynamic = "force-dynamic";
 
@@ -50,8 +51,12 @@ const WHY_TONES: Record<WhyIcon, { fill: string; icon: string; title: string }> 
   };
 
 export default async function HomePage() {
-  const [cms, featuredProjects, newestProjects] = await Promise.all([
+  const [cms, allProjects, featuredProjects, newestProjects] = await Promise.all([
     getCms(),
+    prisma.project.findMany({
+      where: { isPublished: true },
+      orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
+    }),
     prisma.project.findMany({
       where: { isPublished: true, featured: true },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
@@ -64,56 +69,21 @@ export default async function HomePage() {
     }),
   ]);
 
+  // Hero carousel: every published venture, so new ones auto-appear here.
+  const heroVentures = toVentures(allProjects);
+
   // If nothing is marked "featured" yet, fall back to the newest published
   // ventures. An empty homepage grid is worse than a sensible default.
   const source =
     featuredProjects.length > 0 ? featuredProjects : newestProjects;
   const ventures = toVentures(source);
 
-  const { hero, homeAbout, featured, why, quote } = cms;
+  const { homeAbout, featured, why, quote } = cms;
 
   return (
     <>
-      {/* HERO */}
-      <section className="relative h-[100svh] w-full overflow-hidden">
-        <Image
-          src={hero.image}
-          alt={hero.title}
-          fill
-          priority
-          sizes="100vw"
-          className="animate-slowZoom object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/15 to-black/55" />
-
-        <div className="container-page relative flex h-full flex-col items-center justify-center pt-[18vh] text-center">
-          <div className="animate-fadeUp text-cream">
-            <h1 className="font-serif text-hero leading-none tracking-tight drop-shadow-[0_2px_18px_rgba(0,0,0,0.35)]">
-              {hero.title}
-            </h1>
-
-            <div className="mt-14 flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6">
-              <Link href={hero.primaryHref} className="btn-hero-primary group">
-                {hero.primaryLabel}
-                <ArrowRight
-                  size={16}
-                  className="transition-transform duration-500 group-hover:translate-x-1"
-                />
-              </Link>
-              <Link
-                href={hero.secondaryHref}
-                className="btn-hero-secondary group"
-              >
-                {hero.secondaryLabel}
-                <ArrowRight
-                  size={16}
-                  className="transition-transform duration-500 group-hover:translate-x-1"
-                />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* HERO — auto-scrolling ventures carousel */}
+      <HeroVenturesCarousel ventures={heroVentures} />
 
       {/* ABOUT — editorial split */}
       <section className="section-y bg-cream">
