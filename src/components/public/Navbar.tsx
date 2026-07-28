@@ -128,6 +128,17 @@ export default function Navbar({
           </Link>
 
           <div className="flex items-center gap-6">
+            <nav className="hidden lg:flex items-center gap-1">
+              {links.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="px-4 py-2 text-xs uppercase tracking-[0.28em] transition-colors duration-500 hover:text-cream/70 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-current"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
             {portal && (
               <a
                 href={portal.url}
@@ -144,7 +155,7 @@ export default function Navbar({
             aria-expanded={menuOpen}
             aria-controls="site-menu"
             aria-label={menuOpen ? "Close menu" : "Open menu"}
-            className="group flex h-11 items-center gap-4 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-current"
+            className="group flex h-11 items-center gap-4 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-current lg:hidden"
           >
             <span className="text-xs uppercase tracking-[0.28em]">
               {menuOpen ? "Close" : "Menu"}
@@ -168,7 +179,7 @@ export default function Navbar({
 
       <div
         id="site-menu"
-        className={`overflow-hidden bg-loam text-cream transition-[max-height,border-radius] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+        className={`overflow-hidden bg-loam text-cream transition-[max-height,border-radius] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] lg:hidden ${
           menuOpen ? "max-h-[80vh] rounded-b-[48px]" : "max-h-0 rounded-b-none"
         }`}
       >
@@ -291,7 +302,7 @@ export default function Navbar({
       <div
         aria-hidden
         onClick={() => setMenuOpen(false)}
-        className={`fixed inset-0 -z-10 bg-charcoal/40 backdrop-blur-sm transition-opacity duration-700 ${
+        className={`fixed inset-0 -z-10 bg-charcoal/40 backdrop-blur-sm transition-opacity duration-700 lg:hidden ${
           menuOpen ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       />
