@@ -86,7 +86,7 @@ export default function HeroVenturesCarousel({
                 fill
                 priority={i === 0}
                 sizes="100vw"
-                className="object-cover blur-[1.5px] ease-out"
+                className="object-cover ease-out"
                 style={{
                   transform: isActive ? "scale(1.12)" : "scale(1.04)",
                   transitionProperty: "transform",
@@ -180,29 +180,7 @@ export default function HeroVenturesCarousel({
         );
       })}
 
-      {/* Side arrow navigation */}
-      {ventures.length > 1 && (
-        <>
-          <button
-            type="button"
-            onClick={goPrev}
-            aria-label="Previous venture"
-            className="group absolute left-4 top-1/2 z-20 hidden -translate-y-1/2 items-center justify-center border border-cream/40 bg-black/25 text-cream backdrop-blur-sm transition-all duration-500 hover:border-cream hover:bg-cream hover:text-charcoal focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-cream md:left-8 md:inline-flex md:h-14 md:w-14"
-          >
-            <ArrowLeft size={18} className="transition-transform duration-500 group-hover:-translate-x-0.5" />
-          </button>
-          <button
-            type="button"
-            onClick={goNext}
-            aria-label="Next venture"
-            className="group absolute right-4 top-1/2 z-20 hidden -translate-y-1/2 items-center justify-center border border-cream/40 bg-black/25 text-cream backdrop-blur-sm transition-all duration-500 hover:border-cream hover:bg-cream hover:text-charcoal focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-cream md:right-8 md:inline-flex md:h-14 md:w-14"
-          >
-            <ArrowRight size={18} className="transition-transform duration-500 group-hover:translate-x-0.5" />
-          </button>
-        </>
-      )}
-
-      {/* Pagination bars */}
+      {/* Pagination bars — centered along the bottom */}
       {ventures.length > 1 && (
         <div className="absolute inset-x-0 bottom-10 z-20 flex justify-center gap-3">
           {ventures.map((v, i) => (
@@ -226,14 +204,40 @@ export default function HeroVenturesCarousel({
         </div>
       )}
 
-      {/* Slide counter */}
+      {/* Prev / Next arrows stacked above the counter (bottom-right) */}
       {ventures.length > 1 && (
-        <div className="absolute bottom-10 right-6 z-20 text-[11px] uppercase tracking-[0.32em] text-cream/70 md:right-12">
-          <span className="text-cream">
-            {String(active + 1).padStart(2, "0")}
-          </span>
-          <span className="mx-2 text-cream/40">/</span>
-          <span>{String(ventures.length).padStart(2, "0")}</span>
+        <div className="absolute bottom-8 right-6 z-20 flex flex-col items-end gap-3 md:right-12">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={goPrev}
+              aria-label="Previous venture"
+              className="group flex h-10 w-10 items-center justify-center border border-cream/40 bg-black/25 text-cream backdrop-blur-sm transition-all duration-500 hover:border-cream hover:bg-cream hover:text-charcoal focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-cream"
+            >
+              <ArrowLeft
+                size={16}
+                className="transition-transform duration-500 group-hover:-translate-x-0.5"
+              />
+            </button>
+            <button
+              type="button"
+              onClick={goNext}
+              aria-label="Next venture"
+              className="group flex h-10 w-10 items-center justify-center border border-cream/40 bg-black/25 text-cream backdrop-blur-sm transition-all duration-500 hover:border-cream hover:bg-cream hover:text-charcoal focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-cream"
+            >
+              <ArrowRight
+                size={16}
+                className="transition-transform duration-500 group-hover:translate-x-0.5"
+              />
+            </button>
+          </div>
+          <div className="text-[11px] uppercase tracking-[0.32em] text-cream/70">
+            <span className="text-cream">
+              {String(active + 1).padStart(2, "0")}
+            </span>
+            <span className="mx-2 text-cream/40">/</span>
+            <span>{String(ventures.length).padStart(2, "0")}</span>
+          </div>
         </div>
       )}
     </section>
