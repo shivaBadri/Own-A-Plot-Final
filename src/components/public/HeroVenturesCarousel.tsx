@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ArrowLeft } from "lucide-react";
 import { isOpen, type Venture } from "@/lib/content";
 
 const SLIDE_DURATION_MS = 6500;
@@ -35,9 +35,14 @@ export default function HeroVenturesCarousel({
   }, [ventures.length, paused, reducedMotion]);
 
   const goTo = (i: number) => {
-    if (i < 0 || i >= ventures.length || i === active) return;
-    setActive(i);
+    if (ventures.length === 0) return;
+    const next = ((i % ventures.length) + ventures.length) % ventures.length;
+    if (next === active) return;
+    setActive(next);
   };
+
+  const goPrev = () => goTo(active - 1);
+  const goNext = () => goTo(active + 1);
 
   if (ventures.length === 0) {
     return (
@@ -95,9 +100,10 @@ export default function HeroVenturesCarousel({
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-black/40" />
             <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-transparent to-transparent" />
 
-            {/* Content */}
-            <div className="container-page relative flex h-full flex-col justify-end pb-32 md:justify-center md:pb-24">
-              <div className="max-w-3xl text-cream">
+            {/* Content — pushed below the fixed navbar (~h-20) and lifted off
+                the bottom so the pagination + counter never crowd it. */}
+            <div className="container-page relative flex h-full flex-col justify-end pb-36 pt-28 md:justify-center md:pb-32 md:pt-32">
+              <div className="max-w-2xl text-cream">
                 <Reveal active={isActive} delay={200}>
                   <div className="inline-flex items-center gap-2 border border-cream/60 bg-black/25 px-3 py-1.5 backdrop-blur-sm">
                     <span
@@ -112,27 +118,27 @@ export default function HeroVenturesCarousel({
                 </Reveal>
 
                 <Reveal active={isActive} delay={320}>
-                  <p className="mt-8 text-xs uppercase tracking-[0.36em] text-cream/85">
+                  <p className="mt-6 text-xs uppercase tracking-[0.36em] text-cream/85">
                     {v.location}
                   </p>
                 </Reveal>
 
                 <Reveal active={isActive} delay={440}>
-                  <h1 className="mt-4 font-serif text-hero leading-[1.02] drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
+                  <h1 className="mt-4 font-serif text-h1 leading-[1.02] drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
                     {v.name}
                   </h1>
                 </Reveal>
 
                 {v.tagline && (
                   <Reveal active={isActive} delay={620}>
-                    <p className="mt-8 max-w-2xl text-body text-cream/90">
+                    <p className="mt-6 max-w-xl text-body text-cream/90">
                       {v.tagline}
                     </p>
                   </Reveal>
                 )}
 
                 <Reveal active={isActive} delay={760}>
-                  <div className="mt-10 flex flex-wrap items-center gap-x-8 gap-y-4">
+                  <div className="mt-8 flex flex-wrap items-center gap-x-8 gap-y-4">
                     {v.totalAcres != null && (
                       <span className="flex items-baseline gap-2">
                         <span className="font-serif text-h3">
@@ -155,7 +161,7 @@ export default function HeroVenturesCarousel({
                 </Reveal>
 
                 <Reveal active={isActive} delay={900}>
-                  <div className="mt-12">
+                  <div className="mt-10">
                     <Link
                       href={`/ventures/${v.slug}`}
                       className="group inline-flex items-center gap-4 border border-cream/70 px-8 py-4 text-[11px] uppercase tracking-[0.32em] text-cream transition-all duration-500 hover:bg-cream hover:text-charcoal"
@@ -173,6 +179,28 @@ export default function HeroVenturesCarousel({
           </div>
         );
       })}
+
+      {/* Side arrow navigation */}
+      {ventures.length > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={goPrev}
+            aria-label="Previous venture"
+            className="group absolute left-4 top-1/2 z-20 hidden -translate-y-1/2 items-center justify-center border border-cream/40 bg-black/25 text-cream backdrop-blur-sm transition-all duration-500 hover:border-cream hover:bg-cream hover:text-charcoal focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-cream md:left-8 md:inline-flex md:h-14 md:w-14"
+          >
+            <ArrowLeft size={18} className="transition-transform duration-500 group-hover:-translate-x-0.5" />
+          </button>
+          <button
+            type="button"
+            onClick={goNext}
+            aria-label="Next venture"
+            className="group absolute right-4 top-1/2 z-20 hidden -translate-y-1/2 items-center justify-center border border-cream/40 bg-black/25 text-cream backdrop-blur-sm transition-all duration-500 hover:border-cream hover:bg-cream hover:text-charcoal focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-cream md:right-8 md:inline-flex md:h-14 md:w-14"
+          >
+            <ArrowRight size={18} className="transition-transform duration-500 group-hover:translate-x-0.5" />
+          </button>
+        </>
+      )}
 
       {/* Pagination bars */}
       {ventures.length > 1 && (
