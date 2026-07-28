@@ -120,28 +120,33 @@ export default async function VenturePage({ params }: Props) {
             className="animate-slowZoom object-cover"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-black/15 to-black/70" />
+        {/* Layered darkening — flat base + bottom-anchored gradient for the
+            text column + left vignette. Guarantees legibility over any hero
+            image, regardless of how bright the source is. */}
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/15 to-transparent" />
 
         <div className="container-page relative flex h-full flex-col justify-end pb-20 md:pb-28">
-          <div className="animate-fadeUp text-cream">
+          <div className="animate-fadeUp text-cream [text-shadow:0_2px_18px_rgba(0,0,0,0.55)]">
             <div className="flex items-center gap-4">
-              <span className="block h-px w-12 bg-cream/60" />
-              <p className="text-[11px] uppercase tracking-[0.32em] text-cream/85">
+              <span className="block h-px w-12 bg-cream/70" />
+              <p className="text-[11px] uppercase tracking-[0.32em] text-cream">
                 Ventures / {venture.location}
               </p>
             </div>
 
-            <h1 className="mt-8 max-w-4xl font-serif text-hero leading-[1.05]">
+            <h1 className="mt-8 max-w-4xl font-serif text-hero leading-[1.05] drop-shadow-[0_4px_28px_rgba(0,0,0,0.6)]">
               {venture.name}
             </h1>
-            <p className="mt-6 max-w-xl text-body text-cream/85">
+            <p className="mt-6 max-w-xl text-body text-cream/95">
               {venture.tagline}
             </p>
 
-            <div className="mt-12 flex flex-wrap items-center gap-x-12 gap-y-6 border-t border-cream/20 pt-8">
+            <div className="mt-12 flex flex-wrap items-center gap-x-12 gap-y-6 border-t border-cream/30 pt-8">
               {venture.totalAcres !== null && (
                 <div>
-                  <p className="text-[10px] uppercase tracking-[0.28em] text-cream/60">
+                  <p className="text-[10px] uppercase tracking-[0.28em] text-cream/80">
                     Extent
                   </p>
                   <p className="mt-1 font-serif text-h4">
@@ -150,19 +155,19 @@ export default async function VenturePage({ params }: Props) {
                 </div>
               )}
               <div>
-                <p className="text-[10px] uppercase tracking-[0.28em] text-cream/60">
+                <p className="text-[10px] uppercase tracking-[0.28em] text-cream/80">
                   Region
                 </p>
                 <p className="mt-1 max-w-sm text-body">{venture.region}</p>
               </div>
               <div>
-                <p className="text-[10px] uppercase tracking-[0.28em] text-cream/60">
+                <p className="text-[10px] uppercase tracking-[0.28em] text-cream/80">
                   Corridor
                 </p>
                 <p className="mt-1 font-serif text-h4">{venture.location}</p>
               </div>
               <div>
-                <p className="text-[10px] uppercase tracking-[0.28em] text-cream/60">
+                <p className="text-[10px] uppercase tracking-[0.28em] text-cream/80">
                   Status
                 </p>
                 <p className="mt-1 font-serif text-h4">
