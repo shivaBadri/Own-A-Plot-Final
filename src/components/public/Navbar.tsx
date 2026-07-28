@@ -128,14 +128,36 @@ export default function Navbar({
           </Link>
 
           <div className="flex items-center gap-6">
-            <nav className="hidden lg:flex items-center gap-1">
+            <nav className="hidden lg:flex items-center gap-2">
               {links.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="px-4 py-2 text-xs uppercase tracking-[0.28em] transition-colors duration-500 hover:text-cream/70 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-current"
+                  className="group relative inline-block px-4 py-2 text-xs uppercase tracking-[0.28em] transition-colors duration-500 hover:text-gold-soft focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-current"
                 >
-                  {link.label}
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute left-1/2 top-0 h-1 w-1 -translate-x-1/2 rounded-full bg-gold-soft opacity-0 transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-y-1.5 group-hover:opacity-100"
+                  />
+                  <span className="relative inline-block transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-y-0.5 group-hover:scale-110">
+                    {link.label}
+                  </span>
+                  <svg
+                    aria-hidden
+                    viewBox="0 0 120 10"
+                    preserveAspectRatio="none"
+                    className="pointer-events-none absolute inset-x-3 -bottom-0.5 h-2 w-[calc(100%-1.5rem)] overflow-visible"
+                  >
+                    <path
+                      d="M 2 6 Q 30 0 60 6 T 118 6"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.25"
+                      strokeLinecap="round"
+                      pathLength={100}
+                      className="[stroke-dasharray:100] [stroke-dashoffset:100] transition-[stroke-dashoffset] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:[stroke-dashoffset:0]"
+                    />
+                  </svg>
                 </Link>
               ))}
             </nav>
